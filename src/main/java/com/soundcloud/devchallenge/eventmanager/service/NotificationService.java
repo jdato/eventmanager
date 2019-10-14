@@ -13,15 +13,16 @@ import java.util.Map;
 
 public class NotificationService implements Runnable {
 
-    Logger LOG = LoggerFactory.getLogger(NotificationService.class);
+    private Logger LOG = LoggerFactory.getLogger(NotificationService.class);
 
     private List<Integer> connectedUsers = new ArrayList<>();
     private Map<Integer, BufferedWriter> userWriters = new HashMap<>();
+    private ServerSocket userClientServerSocket;
 
     @Override
     public void run() {
         try {
-            ServerSocket userClientServerSocket = new ServerSocket(9099);
+            userClientServerSocket = new ServerSocket(9099);
 
             while (true) {
                 Socket userSocket = userClientServerSocket.accept();
@@ -31,14 +32,14 @@ public class NotificationService implements Runnable {
 
                 connectedUsers.add(id);
                 userWriters.put(id, new BufferedWriter(new OutputStreamWriter(userSocket.getOutputStream(), "UTF-8")));
-                //LOG.debug("Connected user {}", id);
+                LOG.info("Connected user {}", id);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.info("Connections closed.");
         }
     }
 
-    public void notify(Integer id, String payload) {
+    private void notify(Integer id, String payload) {
         if (connectedUsers.contains(id)) {
             try {
                 BufferedWriter writer = userWriters.get(id);
@@ -46,7 +47,7 @@ public class NotificationService implements Runnable {
                 writer.newLine();
                 writer.flush();
             } catch (IOException e) {
-                //LOG.error(e.getMessage());
+                LOG.error(e.getMessage());
             }
         } // else, Ignoring notification silently
     }
@@ -54,7 +55,6 @@ public class NotificationService implements Runnable {
     public void notifyFollowed(Integer followedUser, String payload) {
         if(connectedUsers.contains(followedUser)) {
             notify(followedUser, payload);
-            //LOG.debug("[F] Notified {} of {}", followedUser, payload);
         }
     }
 
@@ -63,7 +63,6 @@ public class NotificationService implements Runnable {
             followers.forEach(follower -> {
                 if (connectedUsers.contains(follower)) {
                     notify(follower, payload);
-                    //LOG.debug("[S] Notified {} of {}", follower, payload);
                 }
             });
         }
@@ -71,14 +70,10 @@ public class NotificationService implements Runnable {
 
     public void sendPrivateMessage(Integer receiver, String payload) {
         notify(receiver, payload);
-        //LOG.debug("[P] Notified {} of {}", receiver, payload);
     }
 
     public void broadcast(String payload) {
-        connectedUsers.forEach(user -> {
-            notify(user, payload);
-            //LOG.debug("[B] Notified {} of {}", user, payload);
-        });
+        connectedUsers.forEach(user -> notify(user, payload));
     }
 
     public void closeStreams() {
@@ -89,5 +84,10 @@ public class NotificationService implements Runnable {
                 LOG.error(e.getMessage());
             }
         });
+        try {
+            userClientServerSocket.close();
+        } catch (IOException e) {
+            LOG.error(e.getMessage());
+        }
     }
 }
