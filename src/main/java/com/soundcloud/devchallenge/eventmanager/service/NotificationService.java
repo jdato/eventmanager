@@ -53,7 +53,7 @@ public class NotificationService implements Runnable {
     }
 
     public void notifyFollowed(Integer followedUser, String payload) {
-        if(connectedUsers.contains(followedUser)) {
+        if (connectedUsers.contains(followedUser)) {
             notify(followedUser, payload);
         }
     }
@@ -77,7 +77,7 @@ public class NotificationService implements Runnable {
     }
 
     public void closeStreams() {
-        userWriters.forEach((user, writer)-> {
+        userWriters.forEach((user, writer) -> {
             try {
                 writer.close();
             } catch (IOException e) {

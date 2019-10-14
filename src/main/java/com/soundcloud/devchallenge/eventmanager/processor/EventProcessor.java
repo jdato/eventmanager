@@ -25,8 +25,12 @@ public class EventProcessor {
     private NotificationService notificationService;
     private EventBuffer eventBuffer;
 
-    public EventProcessor(NotificationService notificationService) throws IOException {
-        this.eventSourceServerSocket = new ServerSocket(9090);
+    public EventProcessor(NotificationService notificationService) {
+        try {
+            this.eventSourceServerSocket = new ServerSocket(9090);
+        } catch (IOException e) {
+            LOG.error(e.getMessage());
+        }
         this.notificationService = notificationService;
         this.followerService = new FollowerService();
         this.eventBuffer = new EventBuffer();
@@ -41,66 +45,71 @@ public class EventProcessor {
         MAX_EVENT_BATCH_SIZE = maxEventBatchSize;
     }
 
-    public void startProcessing() throws IOException {
-        userThread.start();
+    public void startProcessing() {
+        try {
+            userThread.start();
 
-        boolean eventStreamActive = true;
-        int remainingEvents = 0;
-        int timeOutCounter = 0;
+            boolean eventStreamActive = true;
+            int remainingEvents = 0;
+            int timeOutCounter = 0;
 
-        Socket eventSourceSocket = eventSourceServerSocket.accept();
+            Socket eventSourceSocket = eventSourceServerSocket.accept();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(eventSourceSocket.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(eventSourceSocket.getInputStream()));
 
-        // Setup buffer
-        for (int i = 0; i < (MAX_EVENT_BATCH_SIZE * 2); i++) {
-            eventBuffer.writeToBuffer(reader.readLine());
-        }
+            // Setup buffer
+            for (int i = 0; i < (MAX_EVENT_BATCH_SIZE * 2); i++) {
+                eventBuffer.writeToBuffer(reader.readLine());
+            }
 
-        // Process data
-        while (true) {
-            if (reader.ready()) {
-                timeOutCounter = 0;
-                //LOG.info("Reader ready.");
-                for (int i = 0; i < (MAX_EVENT_BATCH_SIZE * 2); i++) {
-                    String eventString = reader.readLine();
-                    //LOG.info("Event {}", eventString);
-                    if (eventString != null) {
-                        eventBuffer.writeToBuffer(eventString);
+            // Process data
+            while (true) {
+                if (reader.ready()) {
+                    timeOutCounter = 0;
+                    //LOG.info("Reader ready.");
+                    for (int i = 0; i < (MAX_EVENT_BATCH_SIZE * 2); i++) {
+                        String eventString = reader.readLine();
+                        //LOG.info("Event {}", eventString);
+                        if (eventString != null) {
+                            eventBuffer.writeToBuffer(eventString);
+                        } else {
+                            eventStreamActive = false;
+                            remainingEvents = i;
+                            break;
+                        }
+                    }
+
+                    if (!eventStreamActive) {
+                        break;
+                    }
+
+                    for (int i = eventBuffer.getBufferWritePosition() - (MAX_EVENT_BATCH_SIZE * 4); i < eventBuffer.getBufferWritePosition() - (MAX_EVENT_BATCH_SIZE * 2); i++) {
+                        processEvent(eventBuffer.readFromBuffer(i + 1));
+                    }
+                } else {
+                    if (timeOutCounter < EVENT_READER_TIMEOUT_IN_MILLISECONDS) {
+                        timeOutCounter++;
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            LOG.error(e.getMessage());
+                        }
                     } else {
-                        eventStreamActive = false;
-                        remainingEvents = i;
                         break;
                     }
                 }
-
-                if (!eventStreamActive) {
-                    break;
-                }
-
-                for (int i = eventBuffer.getBufferWritePosition() - (MAX_EVENT_BATCH_SIZE * 4); i < eventBuffer.getBufferWritePosition() - (MAX_EVENT_BATCH_SIZE * 2); i++) {
-                    processEvent(eventBuffer.readFromBuffer(i + 1));
-                }
-            } else {
-                if (timeOutCounter < EVENT_READER_TIMEOUT_IN_MILLISECONDS) {
-                    timeOutCounter++;
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        LOG.error(e.getMessage());
-                    }
-                } else {
-                    break;
-                }
             }
-        }
 
-        // Tear down buffer
-        for (int i = eventBuffer.getBufferWritePosition() - ((MAX_EVENT_BATCH_SIZE * 2) + remainingEvents); i < eventBuffer.getBufferWritePosition(); i++) {
-            processEvent(eventBuffer.readFromBuffer(i + 1));
-        }
+            // Tear down buffer
+            for (int i = eventBuffer.getBufferWritePosition() - ((MAX_EVENT_BATCH_SIZE * 2) + remainingEvents); i < eventBuffer.getBufferWritePosition(); i++) {
+                processEvent(eventBuffer.readFromBuffer(i + 1));
+            }
 
-        eventSourceServerSocket.close();
+            eventSourceServerSocket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void processEvent(String eventString) {
