@@ -1,2 +1,2 @@
 # eventmanager
-Coding challenge
+SoundCloud Coding Challenge
