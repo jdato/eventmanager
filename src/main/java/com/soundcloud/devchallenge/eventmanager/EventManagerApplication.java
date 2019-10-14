@@ -5,9 +5,9 @@ import com.soundcloud.devchallenge.eventmanager.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EventmanagerApplication {
+public class EventManagerApplication {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EventmanagerApplication.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EventManagerApplication.class);
 
     public static void main(String[] args) {
 

@@ -101,7 +101,7 @@ public class EventProcessor {
             }
 
             // Tear down buffer
-            for (int i = eventBuffer.getBufferWritePosition() - ((MAX_EVENT_BATCH_SIZE * 2) + remainingEvents); i < eventBuffer.getBufferWritePosition(); i++) {
+            for (int i = eventBuffer.getBufferWritePosition() - ((MAX_EVENT_BATCH_SIZE * 2) + remainingEvents); i < eventBuffer.getBufferWritePosition() && i != 0; i++) {
                 processEvent(eventBuffer.readFromBuffer(i + 1));
             }
 
