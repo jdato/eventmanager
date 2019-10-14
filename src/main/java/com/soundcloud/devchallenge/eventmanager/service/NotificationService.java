@@ -31,7 +31,7 @@ public class NotificationService implements Runnable {
 
                 connectedUsers.add(id);
                 userWriters.put(id, new BufferedWriter(new OutputStreamWriter(userSocket.getOutputStream(), "UTF-8")));
-                LOG.info("Connected user {}", id);
+                //LOG.debug("Connected user {}", id);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -46,7 +46,7 @@ public class NotificationService implements Runnable {
                 writer.newLine();
                 writer.flush();
             } catch (IOException e) {
-                LOG.error(e.getMessage());
+                //LOG.error(e.getMessage());
             }
         } // else, Ignoring notification silently
     }
@@ -54,7 +54,7 @@ public class NotificationService implements Runnable {
     public void notifyFollowed(Integer followedUser, String payload) {
         if(connectedUsers.contains(followedUser)) {
             notify(followedUser, payload);
-            LOG.info("[F] Notified {} of {}", followedUser, payload);
+            //LOG.debug("[F] Notified {} of {}", followedUser, payload);
         }
     }
 
@@ -63,7 +63,7 @@ public class NotificationService implements Runnable {
             followers.forEach(follower -> {
                 if (connectedUsers.contains(follower)) {
                     notify(follower, payload);
-                    LOG.info("[S] Notified {} of {}", follower, payload);
+                    //LOG.debug("[S] Notified {} of {}", follower, payload);
                 }
             });
         }
@@ -71,13 +71,13 @@ public class NotificationService implements Runnable {
 
     public void sendPrivateMessage(Integer receiver, String payload) {
         notify(receiver, payload);
-        LOG.info("[P] Notified {} of {}", receiver, payload);
+        //LOG.debug("[P] Notified {} of {}", receiver, payload);
     }
 
     public void broadcast(String payload) {
         connectedUsers.forEach(user -> {
             notify(user, payload);
-            LOG.info("[B] Notified {} of {}", user, payload);
+            //LOG.debug("[B] Notified {} of {}", user, payload);
         });
     }
 

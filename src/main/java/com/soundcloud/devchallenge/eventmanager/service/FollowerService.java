@@ -22,19 +22,19 @@ public class FollowerService {
     public void addFollower(Integer follower, Integer toBeFollowed) {
         if (followers.containsKey(toBeFollowed)) {
             followers.get(toBeFollowed).add(follower);
-            LOG.info("Added {} to {}", follower, toBeFollowed);
+            //LOG.debug("Added {} to {}", follower, toBeFollowed);
         } else {
             List subs = new ArrayList<>();
             subs.add(follower);
             followers.put(toBeFollowed, subs);
-            LOG.info("Added {} to {}", follower, toBeFollowed);
+            //LOG.debug("Added {} to {}", follower, toBeFollowed);
         }
     }
 
     public void removeFollower(Integer follower, Integer toBeFollowed) {
         if (followers.containsKey(toBeFollowed)) {
             followers.get(toBeFollowed).remove(follower);
-            LOG.info("Rmovd {} fr {}", follower, toBeFollowed);
+            //LOG.debug("Rmovd {} fr {}", follower, toBeFollowed);
         }
     }
 
