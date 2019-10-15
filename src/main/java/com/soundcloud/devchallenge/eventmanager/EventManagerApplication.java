@@ -9,6 +9,13 @@ public class EventManagerApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventManagerApplication.class);
 
+    /**
+     * This is the main entry point of the event manager. It will start the application and it will be able to register
+     * users and an event stream.
+     *
+     * @param args - arguments for the application. args[1] can be used to set the maxEventSourceBatchSize for a custom
+     *             setup that differs from the default configuration of 100
+     */
     public static void main(String[] args) {
 
         NotificationService notificationService = new NotificationService();

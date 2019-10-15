@@ -12,10 +12,14 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * This processor takes care of the processing work that the application has to perform.
+ */
 public class EventProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventProcessor.class);
 
+    private static final int EVENT_SERVER_PORT = 9090;
     private final int EVENT_READER_TIMEOUT_IN_MILLISECONDS = 3000;
     private int MAX_EVENT_BATCH_SIZE = 100;
     private Thread userThread;
@@ -27,7 +31,7 @@ public class EventProcessor {
 
     public EventProcessor(NotificationService notificationService) {
         try {
-            this.eventSourceServerSocket = new ServerSocket(9090);
+            this.eventSourceServerSocket = new ServerSocket(EVENT_SERVER_PORT);
         } catch (IOException e) {
             LOG.error(e.getMessage());
         }
@@ -37,14 +41,28 @@ public class EventProcessor {
         this.userThread = new Thread(notificationService);
     }
 
+    /**
+     * Returns the current maxEventBatchSize.
+     * Which defaults to 100
+     *
+     * @return maxEventBatchSize
+     */
     public int getMaxEventBatchSize() {
         return MAX_EVENT_BATCH_SIZE;
     }
 
+    /**
+     * Sets the maxEventBatchSize
+     *
+     * @param maxEventBatchSize - Size of randomized event Batches from event source
+     */
     public void setMaxEventBatchSize(int maxEventBatchSize) {
         MAX_EVENT_BATCH_SIZE = maxEventBatchSize;
     }
 
+    /**
+     * Starts the processing of data from the data sources (User and Events).
+     */
     public void startProcessing() {
         try {
             userThread.start();
@@ -112,6 +130,11 @@ public class EventProcessor {
         }
     }
 
+    /**
+     * Generic method to process a single event.
+     *
+     * @param eventString - Event to be processed
+     */
     private void processEvent(String eventString) {
         String[] data = eventString.split("\\|");
 
